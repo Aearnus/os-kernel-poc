@@ -1,6 +1,6 @@
 [BITS 32]
 
-[GLOBAL start]
+; text section = code
 [SECTION .text]
 %include "macros.asm"
 
@@ -31,14 +31,39 @@ page_tables_identity_map_1gb:
 
     ret ; from .page_tables_identity_map_1gb
 
-enable_paging:
+enable_long_mode_paging:
     ; place the L4 page directory in control register 3
     mov eax, page_l4_directory
     mov cr3, eax
-
-    ; enable Physical Address Extension
+    ; enable Physical Address Extension by flipping bit 5 in
+    ; control register 4
     mov eax, cr4
+    or eax, 1 << 5
+    mov cr4, eax
+    ; enable long mode in the Extended Feature Enable Register by flipping bit 8
+    mov ecx, 0xC0000080
+    rdmsr
+    or eax, 1 << 8
+    wrmsr
+    ; enable paging in control register 0 by flipping bit 31
+    mov eax, cr0
+    or eax, 1 << 31
+    mov cr0, eax
 
+    ret
+
+; this is the all inclusive function to enable long mode just like that
+enable_long_mode:
+    ; do everything necessary for paging
+    call page_tables_identity_map_1gb
+    call enable_long_mode_paging
+    ; set up Global Descriptor Table to enable 64 bit opcodes
+    lgdt [global_descriptor_table.pointer]
+
+    ret
+
+[GLOBAL start]
+[EXTERN long_mode_start]
 start:
     ; establish the stack pointer
     mov esp, stack_top
@@ -48,12 +73,17 @@ start:
     ; 2. the CPUID opcode is available to us
     ; 3. we are running on an x86_64 CPU
     ; if any of these are false, Bad Things will happen
+    ; (your CPU will fault repeatedly and probably catch on fire)
     ; (qemu-system-x86_64 -kernel <kernel> fufills these assumptions)
-    mov [0xB8000], byte 'A'
-    mov [0xB8000 + 1], byte 'a'
+
+    ; let's enable long mode
+    call enable_long_mode
+    ; then we have to long jump to some 64 bit code & begin!
+    jmp long_mode_start
 
 ; thanks to https://os.phil-opp.com/entering-longmode/
 ; to enter longmode
+; bss section = uninitialized data
 [SECTION .bss]
 ALIGN 4096
 ; define the stack
@@ -67,3 +97,14 @@ page_directory:
     resb 4096
 page_table:
     resb 4096
+
+; rodata section = read only data
+[SECTION .rodata]
+global_descriptor_table:
+    ; mandatory 0 entry
+    dq 0
+    ; set as code segment, ' ', set as present, set as 64-bit
+    dq (1<<43) | (1<<44) | (1<<47) | (1<<53)
+.pointer:
+    dw $ - global_descriptor_table - 1
+    dd global_descriptor_table

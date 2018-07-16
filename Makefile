@@ -1,4 +1,4 @@
-NASM_FILES = multiboot.o start.o
+NASM_FILES = multiboot.o start.o long_mode_start.o
 NASM = nasm -f elf32
 
 OUT_KERNEL = kernel.bin
@@ -15,9 +15,11 @@ clean:
 run: kernel
 	qemu-system-x86_64 -kernel $(OUT_KERNEL)
 
-
 multiboot.o:
 	$(NASM) multiboot.asm
 
 start.o:
 	$(NASM) start.asm
+
+long_mode_start.o:
+	$(NASM) long_mode_start.asm
