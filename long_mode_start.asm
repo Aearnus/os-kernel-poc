@@ -3,6 +3,9 @@
 [SECTION .text]
 [GLOBAL long_mode_start]
 long_mode_start:
+    ; load up the long mode IDT
+    lidt [interrupt_descriptor_table.pointer]
+
     ; TODO: transfer control to a higher level language
     mov rcx, 0
 .print_loop:
@@ -17,3 +20,12 @@ long_mode_start:
 [SECTION .rodata]
 string_to_print:
     db "Hello, from x86-64 bit long mode!", 0
+
+interrupt_descriptor_table: 
+    ; reference here for entry format
+    ; https://wiki.osdev.org/IDT#Structure_AMD64
+    ; but for now, let's initialize it _all_ to zero
+    times (255 * 16) db 0
+.pointer:
+    dw $ - interrupt_descriptor_table - 1
+    dq interrupt_descriptor_table

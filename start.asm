@@ -59,8 +59,6 @@ enable_long_mode:
     call enable_long_mode_paging
     ; set up Global Descriptor Table to enable 64 bit opcodes
     lgdt [global_descriptor_table.pointer]
-    ; load up the Interrupt Descriptor Table, since we can't in 64 bit mode
-    lidt [interrupt_descriptor_table.pointer]
 
     ret
 
@@ -111,12 +109,4 @@ global_descriptor_table:
     dw $ - global_descriptor_table - 1
     dd global_descriptor_table
 
-interrupt_descriptor_table: 
-    ; reference here for entry format
-    ; https://wiki.osdev.org/IDT#Structure_AMD64
-    ; but for now, let's initialize it _all_ to zero
-    times (255 * 16) db 0
-.pointer:
-    dw $ - interrupt_descriptor_table - 1
-    dd interrupt_descriptor_table
     

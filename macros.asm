@@ -14,4 +14,9 @@
 
 ; args:
 ; 1: the path to the IDT
-%macro create_interrupt_descriptor_table_gate 1
+; 2: the irq number 
+; 3: ???
+; ; https://wiki.osdev.org/IDT#Structure_AMD64
+%macro create_interrupt_descriptor_table_gate 3
+
+%endmacro
