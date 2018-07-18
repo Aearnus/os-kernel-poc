@@ -12,14 +12,16 @@ interrupt_descriptor_table:
     times (255 * 16) db 0
 .pointer:
     dw $ - interrupt_descriptor_table - 1
-    dq interrupt_descriptor_table
+    dd interrupt_descriptor_table
 
 [SECTION .text]
 %include "macros.asm"
 
 [GLOBAL print_inc]
 print_inc:
+    ;pushad
     mov dword [0xb8000], 0x2f4b2f4f
+    ;popad
     iret
 
 [GLOBAL long_mode_start]
