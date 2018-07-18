@@ -79,7 +79,7 @@ start:
     ; let's enable long mode
     call enable_long_mode
     ; then we have to long jump to some 64 bit code & begin!
-    jmp long_mode_start
+    jmp dword 0x8:long_mode_start
 
 ; thanks to https://os.phil-opp.com/entering-longmode/
 ; to enter longmode
@@ -87,6 +87,8 @@ start:
 [SECTION .bss]
 ALIGN 4096
 ; define the stack
+[GLOBAL stack_top]
+[GLOBAL stack_bottom]
 stack_bottom:
     resb 8192
 stack_top:
@@ -108,5 +110,3 @@ global_descriptor_table:
 .pointer:
     dw $ - global_descriptor_table - 1
     dd global_descriptor_table
-
-    
